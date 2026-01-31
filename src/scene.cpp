@@ -1,6 +1,7 @@
 
 #include "Scene.h"
 #include "QuadModel.h"
+#include "cubemodel.h"
 #include "OBJModel.h"
 
 Scene::Scene(
@@ -49,6 +50,9 @@ void OurTestScene::Init()
 
 	// Create objects
 	m_quad = new QuadModel(m_dxdevice, m_dxdevice_context);
+	m_cube_sun = new CubeModel(m_dxdevice, m_dxdevice_context, 0.8f);
+	m_cube_earth = new CubeModel(m_dxdevice, m_dxdevice_context, 0.5f);
+	m_cube_moon = new CubeModel(m_dxdevice, m_dxdevice_context, 0.2f);
 	m_sponza = new OBJModel("assets/crytek-sponza/sponza.obj", m_dxdevice, m_dxdevice_context);
 }
 
@@ -61,20 +65,27 @@ void OurTestScene::Update(
 	const InputHandler& input_handler)
 {
 	// Basic camera control
+	vec3f inputs = { 0, 0, 0 };
+
 	if (input_handler.IsKeyPressed(Keys::Up) || input_handler.IsKeyPressed(Keys::W))
-		m_camera->Move({ 0.0f, 0.0f, -m_camera_velocity * dt });
+		inputs.z += -1;
 	if (input_handler.IsKeyPressed(Keys::Down) || input_handler.IsKeyPressed(Keys::S))
-		m_camera->Move({ 0.0f, 0.0f, m_camera_velocity * dt });
+		inputs.z += 1;
 	if (input_handler.IsKeyPressed(Keys::Right) || input_handler.IsKeyPressed(Keys::D))
-		m_camera->Move({ m_camera_velocity * dt, 0.0f, 0.0f });
+		inputs.x += 1;
 	if (input_handler.IsKeyPressed(Keys::Left) || input_handler.IsKeyPressed(Keys::A))
-		m_camera->Move({ -m_camera_velocity * dt, 0.0f, 0.0f });
-	if(input_handler.IsKeyPressed(Keys::Space))
-		m_camera->Move({ 0.0f, m_camera_velocity * dt, 0.0f });
-	if(input_handler.IsKeyPressed(Keys::LCtrl))
-		m_camera->Move({ 0.0f, -m_camera_velocity * dt, 0.0f });
+		inputs.x += -1;
+	if (input_handler.IsKeyPressed(Keys::Space))
+		inputs.y += 1;
+	if (input_handler.IsKeyPressed(Keys::LCtrl))
+		inputs.y += -1;
 	if(input_handler.IsKeyPressed(Keys::Esc))
 		PostQuitMessage(0);
+
+	m_camera->Move(inputs, m_camera_velocity, dt);
+
+	//camera rotation
+	m_camera->Rotate(input_handler.GetMouseDeltaX(), input_handler.GetMouseDeltaY());
 
 	// Now set/update object transformations
 	// This can be done using any sequence of transformation matrices,
@@ -86,6 +97,19 @@ void OurTestScene::Update(
 	m_quad_transform = mat4f::translation(0, 0, 0) *			// No translation
 		mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
 		mat4f::scaling(1.5, 1.5, 1.5);				// Scale uniformly to 150%
+
+	//cube
+	m_cube_transform_sun = mat4f::translation(0, 0, 0) *			
+		mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *	
+		mat4f::scaling(1.5, 1.5, 1.5);
+
+	m_cube_transform_earth = m_cube_transform_sun * mat4f::translation(5, 0, 0) *
+													mat4f::rotation(0, 0, 1, 0) *
+													mat4f::scaling(1.5, 1.5, 1.5);
+
+	m_cube_transform_moon = m_cube_transform_earth * mat4f::translation(1, 0, 0) *
+													mat4f::rotation(-m_angle, 0, 1, 0) *
+													mat4f::scaling(1.5, 1.5, 1.5);
 
 	// Sponza model-to-world transformation
 	m_sponza_transform = mat4f::translation(0, -5, 0) *		 // Move down 5 units
@@ -118,8 +142,18 @@ void OurTestScene::Render()
 	m_projection_matrix = m_camera->ProjectionMatrix();
 
 	// Load matrices + the Quad's transformation to the device and render it
-	UpdateTransformationBuffer(m_quad_transform, m_view_matrix, m_projection_matrix);
-	m_quad->Render();
+	/*UpdateTransformationBuffer(m_quad_transform, m_view_matrix, m_projection_matrix);
+	m_quad->Render();*/
+
+	//cube
+	UpdateTransformationBuffer(m_cube_transform_sun, m_view_matrix, m_projection_matrix);
+	m_cube_sun->Render();
+
+	UpdateTransformationBuffer(m_cube_transform_earth, m_view_matrix, m_projection_matrix);
+	m_cube_earth->Render();
+
+	UpdateTransformationBuffer(m_cube_transform_moon, m_view_matrix, m_projection_matrix);
+	m_cube_moon->Render();
 
 	// Load matrices + Sponza's transformation to the device and render it
 	UpdateTransformationBuffer(m_sponza_transform, m_view_matrix, m_projection_matrix);
@@ -129,6 +163,9 @@ void OurTestScene::Render()
 void OurTestScene::Release()
 {
 	SAFE_DELETE(m_quad);
+	SAFE_DELETE(m_cube_sun);
+	SAFE_DELETE(m_cube_earth);
+	SAFE_DELETE(m_cube_moon);
 	SAFE_DELETE(m_sponza);
 	SAFE_DELETE(m_camera);
 
@@ -157,6 +194,11 @@ void OurTestScene::InitTransformationBuffer()
 	matrixBufferDesc.MiscFlags = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 	ASSERT(hr = m_dxdevice->CreateBuffer(&matrixBufferDesc, nullptr, &m_transformation_buffer));
+}
+
+void OurTestScene::InitLightCameraBuffer()
+{
+
 }
 
 void OurTestScene::UpdateTransformationBuffer(
