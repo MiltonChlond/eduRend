@@ -79,6 +79,13 @@ class OurTestScene : public Scene
 	// CBuffer for transformation matrices
 	ID3D11Buffer* m_transformation_buffer = nullptr;
 	ID3D11Buffer* m_lightcamera_buffer = nullptr;
+
+	vec3f m_light_position = { 1, 1, 1 };
+	float m_light_angle = 0;
+	float m_light_radius = 6;
+	vec3f lightMoveVector = { 0, 0, -5 };
+	float m_light_angular_velocity = 1;
+	
 	//ID3D11Buffer* m_transformation_buffer = nullptr;
 	// + other CBuffers
 
@@ -112,7 +119,7 @@ class OurTestScene : public Scene
 	void InitLightCameraBuffer();
 
 	void UpdateTransformationBuffer(mat4f model_to_world_matrix, mat4f world_to_view_matrix, mat4f projection_matrix);
-	void UpdateLightCameraBuffer(mat4f model_to_world_matrix, mat4f world_to_view_matrix, mat4f projection_matrix);
+	void UpdateLightCameraBuffer();
 
 public:
 	/**

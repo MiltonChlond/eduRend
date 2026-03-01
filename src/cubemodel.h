@@ -4,6 +4,8 @@
 class CubeModel : public Model
 {
 	unsigned m_number_of_indices = 0;
+	Texture texture;
+	ID3D11SamplerState* sampler = nullptr;
 
 public:
 	
@@ -13,8 +15,8 @@ public:
 
 	virtual void CreateCubeFace(float, std::vector<Vertex>&, std::vector<unsigned>&, const vec3<float>&) const;
 	
-	virtual void Render() const;
+	virtual void Render();
 
 	
-	~CubeModel() {}
+	~CubeModel();
 };

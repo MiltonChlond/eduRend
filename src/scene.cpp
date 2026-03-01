@@ -31,6 +31,7 @@ OurTestScene::OurTestScene(
 	Scene(dxdevice, dxdevice_context, window_width, window_height)
 { 
 	InitTransformationBuffer();
+	InitLightCameraBuffer();
 	// + init other CBuffers
 }
 
@@ -64,6 +65,19 @@ void OurTestScene::Update(
 	float dt,
 	const InputHandler& input_handler)
 {
+
+	//light animation
+	if (m_light_position.z >= 10)
+	{
+		lightMoveVector = { 0, 0, -5 };
+	}
+	else if (m_light_position.z <= -10)
+	{
+		lightMoveVector = { 0, 0, 5 };
+	}
+	m_light_position += lightMoveVector * dt;
+
+
 	// Basic camera control
 	vec3f inputs = { 0, 0, 0 };
 
@@ -87,6 +101,18 @@ void OurTestScene::Update(
 	//camera rotation
 	m_camera->Rotate(input_handler.GetMouseDeltaX(), input_handler.GetMouseDeltaY());
 
+	//sampler input
+	if (input_handler.IsKeyPressed(Keys::P))
+
+	if (input_handler.IsKeyPressed(Keys::O))
+
+	if (input_handler.IsKeyPressed(Keys::I))
+
+	if (input_handler.IsKeyPressed(Keys::U))
+
+	if (input_handler.IsKeyPressed(Keys::Y))
+
+
 	// Now set/update object transformations
 	// This can be done using any sequence of transformation matrices,
 	// but the T*R*S order is most common; i.e. scale, then rotate, and then translate.
@@ -94,27 +120,49 @@ void OurTestScene::Update(
 	// via e.g. Mquad = linalg::mat4f_identity; 
 
 	// Quad model-to-world transformation
-	m_quad_transform = mat4f::translation(0, 0, 0) *			// No translation
-		mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
-		mat4f::scaling(1.5, 1.5, 1.5);				// Scale uniformly to 150%
+	//m_quad_transform = mat4f::translation(0, 0, 0) *			// No translation
+	//	mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
+	//	mat4f::scaling(1.5, 1.5, 1.5);				// Scale uniformly to 150%
 
-	//cube
-	m_cube_transform_sun = mat4f::translation(0, 0, 0) *			
-		mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *	
-		mat4f::scaling(1.5, 1.5, 1.5);
+	////cube
+	//m_cube_transform_sun = mat4f::translation(0, 0, 0) *			
+	//	mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *	
+	//	mat4f::scaling(1.5, 1.5, 1.5);
 
-	m_cube_transform_earth = m_cube_transform_sun * mat4f::translation(5, 0, 0) *
-													mat4f::rotation(0, 0, 1, 0) *
-													mat4f::scaling(1.5, 1.5, 1.5);
+	//m_cube_transform_earth = m_cube_transform_sun * mat4f::translation(5, 0, 0) *
+	//												mat4f::rotation(0, 0, 1, 0) *
+	//												mat4f::scaling(1.5, 1.5, 1.5);
 
-	m_cube_transform_moon = m_cube_transform_earth * mat4f::translation(1, 0, 0) *
-													mat4f::rotation(-m_angle, 0, 1, 0) *
-													mat4f::scaling(1.5, 1.5, 1.5);
+	//m_cube_transform_moon = m_cube_transform_earth * mat4f::translation(1, 0, 0) *
+	//												mat4f::rotation(-m_angle, 0, 1, 0) *
+	//												mat4f::scaling(1.5, 1.5, 1.5);
 
-	// Sponza model-to-world transformation
-	m_sponza_transform = mat4f::translation(0, -5, 0) *		 // Move down 5 units
-		mat4f::rotation(fPI / 2, 0.0f, 1.0f, 0.0f) * // Rotate pi/2 radians (90 degrees) around y
-		mat4f::scaling(0.05f);						 // The scene is quite large so scale it down to 5%
+	//// Sponza model-to-world transformation
+	//m_sponza_transform = mat4f::translation(0, -5, 0) *		 // Move down 5 units
+	//	mat4f::rotation(fPI / 2, 0.0f, 1.0f, 0.0f) * // Rotate pi/2 radians (90 degrees) around y
+	//	mat4f::scaling(0.05f);						 // The scene is quite large so scale it down to 5%
+
+
+	m_cube_sun->SetTransform(mat4f::translation(0, 0, 0) *
+							mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *
+							mat4f::scaling(1.5, 1.5, 1.5));
+	
+
+	m_cube_earth->SetTransform(mat4f::translation(5, 0, 0) *
+							   mat4f::rotation(-m_angle, 0, 1, 0) *
+						       mat4f::scaling(1.5, 1.5, 1.5));
+	m_cube_earth->SetParent(*m_cube_sun);
+
+
+	m_cube_moon->SetTransform(mat4f::translation(1, 0, 0) *
+							  mat4f::rotation(-m_angle, 0, 1, 0) *
+							  mat4f::scaling(1.5, 1.5, 1.5));
+	m_cube_moon->SetParent(*m_cube_earth);
+	
+
+	m_sponza->SetTransform(mat4f::translation(0, -5, 0) *
+						   mat4f::rotation(fPI / 2, 0.0f, 1.0f, 0.0f) *
+						   mat4f::scaling(0.05f));
 
 	// Increment the rotation angle.
 	m_angle += m_angular_velocity * dt;
@@ -134,8 +182,11 @@ void OurTestScene::Update(
 //
 void OurTestScene::Render()
 {
+	UpdateLightCameraBuffer();
+
 	// Bind transformation_buffer to slot b0 of the VS
 	m_dxdevice_context->VSSetConstantBuffers(0, 1, &m_transformation_buffer);
+	m_dxdevice_context->PSSetConstantBuffers(0, 1, &m_lightcamera_buffer);
 
 	// Obtain the matrices needed for rendering from the camera
 	m_view_matrix = m_camera->WorldToViewMatrix();
@@ -146,17 +197,17 @@ void OurTestScene::Render()
 	m_quad->Render();*/
 
 	//cube
-	UpdateTransformationBuffer(m_cube_transform_sun, m_view_matrix, m_projection_matrix);
+	UpdateTransformationBuffer(m_cube_sun->GetTransform(), m_view_matrix, m_projection_matrix);
 	m_cube_sun->Render();
 
-	UpdateTransformationBuffer(m_cube_transform_earth, m_view_matrix, m_projection_matrix);
+	UpdateTransformationBuffer(m_cube_earth->GetTransform(), m_view_matrix, m_projection_matrix);
 	m_cube_earth->Render();
 
-	UpdateTransformationBuffer(m_cube_transform_moon, m_view_matrix, m_projection_matrix);
+	UpdateTransformationBuffer(m_cube_moon->GetTransform(), m_view_matrix, m_projection_matrix);
 	m_cube_moon->Render();
 
 	// Load matrices + Sponza's transformation to the device and render it
-	UpdateTransformationBuffer(m_sponza_transform, m_view_matrix, m_projection_matrix);
+	UpdateTransformationBuffer(m_sponza->GetTransform(), m_view_matrix, m_projection_matrix);
 	m_sponza->Render();
 }
 
@@ -170,6 +221,7 @@ void OurTestScene::Release()
 	SAFE_DELETE(m_camera);
 
 	SAFE_RELEASE(m_transformation_buffer);
+	SAFE_RELEASE(m_lightcamera_buffer);
 	// + release other CBuffers
 }
 
@@ -198,7 +250,15 @@ void OurTestScene::InitTransformationBuffer()
 
 void OurTestScene::InitLightCameraBuffer()
 {
-
+	HRESULT hr;
+	D3D11_BUFFER_DESC LCBufferDesc = { 0 };
+	LCBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	LCBufferDesc.ByteWidth = sizeof(LightCameraBuffer);
+	LCBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	LCBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	LCBufferDesc.MiscFlags = 0;
+	LCBufferDesc.StructureByteStride = 0;
+	ASSERT(hr = m_dxdevice->CreateBuffer(&LCBufferDesc, nullptr, &m_lightcamera_buffer));
 }
 
 void OurTestScene::UpdateTransformationBuffer(
@@ -214,4 +274,18 @@ void OurTestScene::UpdateTransformationBuffer(
 	matrixBuffer->WorldToViewMatrix = WorldToViewMatrix;
 	matrixBuffer->ProjectionMatrix = ProjectionMatrix;
 	m_dxdevice_context->Unmap(m_transformation_buffer, 0);
+}
+
+void OurTestScene::UpdateLightCameraBuffer()
+{
+	D3D11_MAPPED_SUBRESOURCE resource;
+	m_dxdevice_context->Map(m_lightcamera_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+
+	LightCameraBuffer* buffer = (LightCameraBuffer*)resource.pData;
+	buffer->lightPos = vec4f(m_light_position.x, m_light_position.y, m_light_position.z, 1.0f);
+
+	vec3f camPos = m_camera->Position();
+	buffer->camPos = vec4f(camPos.x, camPos.y, camPos.z, 1.0f);
+
+	m_dxdevice_context->Unmap(m_lightcamera_buffer, 0);
 }

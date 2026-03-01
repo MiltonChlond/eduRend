@@ -20,6 +20,7 @@ struct PSIn
 	float4 Pos  : SV_Position;
 	float3 Normal : NORMAL;
 	float2 TexCoord : TEX;
+    float3 WorldPos : WORLDPOS;
 };
 
 //-----------------------------------------------------------------------------------------
@@ -28,19 +29,36 @@ struct PSIn
 
 PSIn VS_main(VSIn input)
 {
-	PSIn output = (PSIn)0;
+	//PSIn output = (PSIn)0;
 	
-	// Model->View transformation
-	matrix MV = mul(WorldToViewMatrix, ModelToWorldMatrix);
+	//// Model->View transformation
+	//matrix MV = mul(WorldToViewMatrix, ModelToWorldMatrix);
 
-	// Model->View->Projection (clip space) transformation
-	// SV_Position expects the output position to be in clip space
-	matrix MVP = mul(ProjectionMatrix, MV);
+	//// Model->View->Projection (clip space) transformation
+	//// SV_Position expects the output position to be in clip space
+	//matrix MVP = mul(ProjectionMatrix, MV);
 	
-	// Perform transformations and send to output
-	output.Pos = mul(MVP, float4(input.Pos, 1));
-	output.Normal = normalize( mul(ModelToWorldMatrix, float4(input.Normal,0)).xyz );
-	output.TexCoord = input.TexCoord;
+	//// Perform transformations and send to output
+	//output.Pos = mul(MVP, float4(input.Pos, 1));
+	//output.Normal = normalize( mul(ModelToWorldMatrix, float4(input.Normal,0)).xyz );
+	//output.TexCoord = input.TexCoord;
 		
-	return output;
+	//return output;
+	
+    PSIn output = (PSIn) 0;
+
+    // --- WORLD POSITION ---
+    float4 worldPos = mul(ModelToWorldMatrix, float4(input.Pos, 1.0f));
+    output.WorldPos = worldPos.xyz;
+
+    // --- NORMAL TO WORLD SPACE ---
+    output.Normal = normalize(mul(ModelToWorldMatrix, float4(input.Normal, 0.0f)).xyz);
+
+    // --- VIEW + PROJECTION ---
+    float4 viewPos = mul(WorldToViewMatrix, worldPos);
+    output.Pos = mul(ProjectionMatrix, viewPos);
+
+    output.TexCoord = input.TexCoord;
+
+    return output;
 }

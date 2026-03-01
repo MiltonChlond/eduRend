@@ -10,6 +10,26 @@ CubeModel::CubeModel(
 	std::vector<Vertex> vertices;
 	std::vector<unsigned> indices;
 
+	//texture
+	LoadTextureFromFile(dxdevice, dxdevice_context, "assets/textures/crate.png", &texture);
+	if (!texture)
+	{
+		OutputDebugStringA("nah");
+	}
+
+
+	//sampler
+	D3D11_SAMPLER_DESC sampDesc{};
+	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampDesc.MaxAnisotropy = 8;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	dxdevice->CreateSamplerState(&sampDesc, &sampler);
+
 	CreateCube(size, vertices, indices);
 
 	// Vertex array descriptor
@@ -122,7 +142,7 @@ void CubeModel::CreateCubeFace(float halfLength, std::vector<Vertex>& vertices, 
 	}
 }
 
-void CubeModel::Render() const
+void CubeModel::Render()
 {
 	// Bind our vertex buffer
 	const UINT32 stride = sizeof(Vertex); //  sizeof(float) * 8;
@@ -132,6 +152,16 @@ void CubeModel::Render() const
 	// Bind our index buffer
 	m_dxdevice_context->IASetIndexBuffer(m_index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
+	m_dxdevice_context->PSSetShaderResources(0, 1, &texture.TextureView);
+
+	m_dxdevice_context->PSSetSamplers(0, 1, &sampler);
+
 	// Make the drawcall
 	m_dxdevice_context->DrawIndexed(m_number_of_indices, 0, 0);
+}
+
+CubeModel::~CubeModel()
+{
+	SAFE_RELEASE(texture.TextureView);
+	SAFE_RELEASE(sampler);
 }

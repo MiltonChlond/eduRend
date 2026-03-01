@@ -7,6 +7,11 @@ void Camera::MoveTo(const vec3f& position) noexcept
 	m_position = position;
 }
 
+linalg::vec3f& Camera::Position() noexcept
+{
+	return m_position;
+}
+
 void Camera::Move(const vec3f& inputs, float& speed, float& dt) noexcept
 {
 	mat4f rotationMatrix = mat4f::rotation(0, m_rotation.x, m_rotation.y);

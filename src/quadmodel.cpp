@@ -71,7 +71,7 @@ QuadModel::QuadModel(
 }
 
 
-void QuadModel::Render() const
+void QuadModel::Render()
 {
 	// Bind our vertex buffer
 	const UINT32 stride = sizeof(Vertex); //  sizeof(float) * 8;

@@ -25,7 +25,7 @@ public:
 	/**
 	 * @brief Render the model.
 	*/
-	virtual void Render() const;
+	virtual void Render();
 
 	/**
 	 *@brief Destructor. 
