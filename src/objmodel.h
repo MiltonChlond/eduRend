@@ -25,13 +25,6 @@ class OBJModel : public Model
 	std::vector<IndexRange> m_index_ranges;
 	std::vector<Material> m_materials;
 
-	ID3D11SamplerState* sampler = nullptr;
-	D3D11_FILTER ani_eight_Filter;
-	D3D11_FILTER ani_sixteen_Filter;
-	D3D11_FILTER pointFilter;
-	D3D11_FILTER linearFilter;
-	D3D11_FILTER* filter;
-
 	void append_materials(const std::vector<Material>& mtl_vec)
 	{
 		m_materials.insert(m_materials.end(), mtl_vec.begin(), mtl_vec.end());
@@ -47,8 +40,6 @@ public:
 	 * @param dxdevice_context Valid ID3D11DeviceContext.
 	*/
 	OBJModel(const std::string& objfile, ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context);
-
-	virtual void UpdateFilter(int i);
 
 	/**
 	 * @brief Renders the model.

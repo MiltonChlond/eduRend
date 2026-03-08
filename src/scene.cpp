@@ -32,6 +32,7 @@ OurTestScene::OurTestScene(
 { 
 	InitTransformationBuffer();
 	InitLightCameraBuffer();
+	InitSampler();
 	// + init other CBuffers
 }
 
@@ -43,7 +44,7 @@ void OurTestScene::Init()
 	m_camera = new Camera(
 		45.0f * fTO_RAD,		// field-of-view (radians)
 		(float)m_window_width / m_window_height,	// aspect ratio
-		1.0f,					// z-near plane (everything closer will be clipped/removed)
+		0.01f,					// z-near plane (everything closer will be clipped/removed)
 		500.0f);				// z-far plane (everything further will be clipped/removed)
 
 	// Move camera to (0,0,5)
@@ -101,62 +102,33 @@ void OurTestScene::Update(
 	//camera rotation
 	m_camera->Rotate(input_handler.GetMouseDeltaX(), input_handler.GetMouseDeltaY());
 
-	//sampler input
 	if (input_handler.IsKeyPressed(Keys::P))
-
+	{
+		UpdateSamplerState(1);
+	}
 	if (input_handler.IsKeyPressed(Keys::O))
-
+	{
+		UpdateSamplerState(2);
+	}
 	if (input_handler.IsKeyPressed(Keys::I))
-
-	if (input_handler.IsKeyPressed(Keys::U))
-
-	if (input_handler.IsKeyPressed(Keys::Y))
-
-
-	// Now set/update object transformations
-	// This can be done using any sequence of transformation matrices,
-	// but the T*R*S order is most common; i.e. scale, then rotate, and then translate.
-	// If no transformation is desired, an identity matrix can be obtained 
-	// via e.g. Mquad = linalg::mat4f_identity; 
-
-	// Quad model-to-world transformation
-	//m_quad_transform = mat4f::translation(0, 0, 0) *			// No translation
-	//	mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
-	//	mat4f::scaling(1.5, 1.5, 1.5);				// Scale uniformly to 150%
-
-	////cube
-	//m_cube_transform_sun = mat4f::translation(0, 0, 0) *			
-	//	mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *	
-	//	mat4f::scaling(1.5, 1.5, 1.5);
-
-	//m_cube_transform_earth = m_cube_transform_sun * mat4f::translation(5, 0, 0) *
-	//												mat4f::rotation(0, 0, 1, 0) *
-	//												mat4f::scaling(1.5, 1.5, 1.5);
-
-	//m_cube_transform_moon = m_cube_transform_earth * mat4f::translation(1, 0, 0) *
-	//												mat4f::rotation(-m_angle, 0, 1, 0) *
-	//												mat4f::scaling(1.5, 1.5, 1.5);
-
-	//// Sponza model-to-world transformation
-	//m_sponza_transform = mat4f::translation(0, -5, 0) *		 // Move down 5 units
-	//	mat4f::rotation(fPI / 2, 0.0f, 1.0f, 0.0f) * // Rotate pi/2 radians (90 degrees) around y
-	//	mat4f::scaling(0.05f);						 // The scene is quite large so scale it down to 5%
+	{
+		UpdateSamplerState(0);
+	}
 
 
 	m_cube_sun->SetTransform(mat4f::translation(0, 0, 0) *
 							mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *
-							mat4f::scaling(1.5, 1.5, 1.5));
+							mat4f::scaling(1, 1, 1));
 	
-
 	m_cube_earth->SetTransform(mat4f::translation(5, 0, 0) *
 							   mat4f::rotation(-m_angle, 0, 1, 0) *
-						       mat4f::scaling(1.5, 1.5, 1.5));
+						       mat4f::scaling(1, 1, 1));
 	m_cube_earth->SetParent(*m_cube_sun);
 
 
 	m_cube_moon->SetTransform(mat4f::translation(1, 0, 0) *
 							  mat4f::rotation(-m_angle, 0, 1, 0) *
-							  mat4f::scaling(1.5, 1.5, 1.5));
+							  mat4f::scaling(1, 1, 1));
 	m_cube_moon->SetParent(*m_cube_earth);
 	
 
@@ -186,7 +158,9 @@ void OurTestScene::Render()
 
 	// Bind transformation_buffer to slot b0 of the VS
 	m_dxdevice_context->VSSetConstantBuffers(0, 1, &m_transformation_buffer);
-	m_dxdevice_context->PSSetConstantBuffers(0, 1, &m_lightcamera_buffer);
+	m_dxdevice_context->PSSetConstantBuffers(2, 1, &m_lightcamera_buffer);
+
+	m_dxdevice_context->PSSetSamplers(0, 1, &sampler);
 
 	// Obtain the matrices needed for rendering from the camera
 	m_view_matrix = m_camera->WorldToViewMatrix();
@@ -222,6 +196,9 @@ void OurTestScene::Release()
 
 	SAFE_RELEASE(m_transformation_buffer);
 	SAFE_RELEASE(m_lightcamera_buffer);
+	SAFE_RELEASE(samplerAni);
+	SAFE_RELEASE(samplerPoint);
+	SAFE_RELEASE(samplerLinear);
 	// + release other CBuffers
 }
 
@@ -233,6 +210,61 @@ void OurTestScene::OnWindowResized(
 		m_camera->SetAspect(float(new_width) / new_height);
 
 	Scene::OnWindowResized(new_width, new_height);
+}
+
+void OurTestScene::InitSampler()
+{
+	//sampler
+	D3D11_SAMPLER_DESC sampDescAni{};
+	sampDescAni.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampDescAni.MaxAnisotropy = 16;
+	sampDescAni.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescAni.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescAni.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescAni.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDescAni.MinLOD = 0;
+	sampDescAni.MaxLOD = D3D11_FLOAT32_MAX;
+	m_dxdevice->CreateSamplerState(&sampDescAni, &samplerAni);
+
+	D3D11_SAMPLER_DESC sampDescP{};
+	sampDescP.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	sampDescP.MaxAnisotropy = 16;
+	sampDescP.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescP.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescP.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescP.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDescP.MinLOD = 0;
+	sampDescP.MaxLOD = D3D11_FLOAT32_MAX;
+	m_dxdevice->CreateSamplerState(&sampDescP, &samplerPoint);
+
+	D3D11_SAMPLER_DESC sampDescL{};
+	sampDescL.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDescL.MaxAnisotropy = 16;
+	sampDescL.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescL.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescL.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDescL.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDescL.MinLOD = 0;
+	sampDescL.MaxLOD = D3D11_FLOAT32_MAX;
+	m_dxdevice->CreateSamplerState(&sampDescL, &samplerLinear);
+
+	sampler = samplerAni;
+}
+
+void OurTestScene::UpdateSamplerState(int i)
+{
+	if (i == 0)
+	{
+		sampler = samplerAni;
+	}
+	if (i == 1)
+	{
+		sampler = samplerPoint;
+	}
+	if (i == 2)
+	{
+		sampler = samplerLinear;
+	}
 }
 
 void OurTestScene::InitTransformationBuffer()

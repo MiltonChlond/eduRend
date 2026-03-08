@@ -47,18 +47,16 @@ PSIn VS_main(VSIn input)
 	
     PSIn output = (PSIn) 0;
 
-    // --- WORLD POSITION ---
     float4 worldPos = mul(ModelToWorldMatrix, float4(input.Pos, 1.0f));
     output.WorldPos = worldPos.xyz;
 
-    // --- NORMAL TO WORLD SPACE ---
     output.Normal = normalize(mul(ModelToWorldMatrix, float4(input.Normal, 0.0f)).xyz);
 
-    // --- VIEW + PROJECTION ---
     float4 viewPos = mul(WorldToViewMatrix, worldPos);
     output.Pos = mul(ProjectionMatrix, viewPos);
 
     output.TexCoord = input.TexCoord;
 
     return output;
+	
 }

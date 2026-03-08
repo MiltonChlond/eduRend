@@ -12,23 +12,14 @@ CubeModel::CubeModel(
 
 	//texture
 	LoadTextureFromFile(dxdevice, dxdevice_context, "assets/textures/crate.png", &texture);
-	if (!texture)
+	if (!texture.TextureView)
 	{
 		OutputDebugStringA("nah");
 	}
-
-
-	//sampler
-	D3D11_SAMPLER_DESC sampDesc{};
-	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
-	sampDesc.MaxAnisotropy = 8;
-	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	sampDesc.MinLOD = 0;
-	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	dxdevice->CreateSamplerState(&sampDesc, &sampler);
+	else
+	{
+		OutputDebugStringA("correct");
+	}
 
 	CreateCube(size, vertices, indices);
 
@@ -152,9 +143,9 @@ void CubeModel::Render()
 	// Bind our index buffer
 	m_dxdevice_context->IASetIndexBuffer(m_index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
-	m_dxdevice_context->PSSetShaderResources(0, 1, &texture.TextureView);
+	//m_dxdevice_context->PSSetConstantBuffers(1, 1, &m_material_buffer);
 
-	m_dxdevice_context->PSSetSamplers(0, 1, &sampler);
+	m_dxdevice_context->PSSetShaderResources(0, 1, &texture.TextureView);
 
 	// Make the drawcall
 	m_dxdevice_context->DrawIndexed(m_number_of_indices, 0, 0);
@@ -163,5 +154,4 @@ void CubeModel::Render()
 CubeModel::~CubeModel()
 {
 	SAFE_RELEASE(texture.TextureView);
-	SAFE_RELEASE(sampler);
 }

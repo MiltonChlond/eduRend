@@ -118,6 +118,13 @@ class OurTestScene : public Scene
 	void InitTransformationBuffer();
 	void InitLightCameraBuffer();
 
+	ID3D11SamplerState* sampler = nullptr;
+	ID3D11SamplerState* samplerPoint = nullptr;
+	ID3D11SamplerState* samplerLinear = nullptr;
+	ID3D11SamplerState* samplerAni = nullptr;
+	void InitSampler();
+	void UpdateSamplerState(int i);
+
 	void UpdateTransformationBuffer(mat4f model_to_world_matrix, mat4f world_to_view_matrix, mat4f projection_matrix);
 	void UpdateLightCameraBuffer();
 

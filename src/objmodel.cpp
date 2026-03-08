@@ -6,22 +6,6 @@ OBJModel::OBJModel(
 	ID3D11DeviceContext* dxdevice_context)
 	: Model(dxdevice, dxdevice_context)
 {
-	ani_eight_Filter = D3D11_FILTER_ANISOTROPIC;
-	ani_sixteen_Filter = D3D11_FILTER_ANISOTROPIC;
-	pointFilter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-	linearFilter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	filter = &pointFilter;
-
-	D3D11_SAMPLER_DESC sampDesc{};
-	sampDesc.Filter = *filter;
-	sampDesc.MaxAnisotropy = 8;
-	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	sampDesc.MinLOD = 0;
-	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	dxdevice->CreateSamplerState(&sampDesc, &sampler);
 
 	// Load the OBJ
 	OBJLoader* mesh = new OBJLoader();
@@ -103,21 +87,6 @@ OBJModel::OBJModel(
 	SAFE_DELETE(mesh);
 }
 
-void OBJModel::UpdateFilter(int i)
-{
-	switch (i)
-	{
-		case 0:
-			filter = &pointFilter;
-		case 1:
-			filter = &linearFilter;
-		case 2:
-			filter = &ani_eight_Filter;
-		case 3:
-			filter = &ani_sixteen_Filter;
-	}
-}
-
 void OBJModel::Render()
 {
 	// Bind vertex buffer
@@ -144,8 +113,6 @@ void OBJModel::Render()
 		m_dxdevice_context->PSSetShaderResources(0, 1, &material.DiffuseTexture.TextureView);
 		// + bind other textures here, e.g. a normal map, to appropriate slots
 
-		m_dxdevice_context->PSSetSamplers(0, 1, &sampler);
-
 		// Make the drawcall
 		m_dxdevice_context->DrawIndexed(indexRange.Size, indexRange.Start, 0);
 	}
@@ -156,7 +123,6 @@ OBJModel::~OBJModel()
 	for (auto& material : m_materials)
 	{
 		SAFE_RELEASE(material.DiffuseTexture.TextureView);
-		SAFE_RELEASE(sampler);
 		// Release other used textures ...
 	}
 }

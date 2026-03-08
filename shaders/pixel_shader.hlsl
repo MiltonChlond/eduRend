@@ -1,7 +1,7 @@
 
 Texture2D texDiffuse : register(t0);
 
-cbuffer LightCameraBuffer : register(b0)
+cbuffer LightCameraBuffer : register(b2)
 {
     float4 lightPos;
     float4 camPos;
@@ -46,7 +46,6 @@ float4 PS_main(PSIn input) : SV_Target
     float3 R = reflect(-L, N);
 
     float3 texColor = texDiffuse.Sample(samp, input.TexCoord).rgb;
-    
     float3 ambient = ambientColor.rgb * texColor;
 
     float diff = saturate(dot(N, L));
@@ -59,7 +58,7 @@ float4 PS_main(PSIn input) : SV_Target
     float3 finalColor = ambient + diffuse + specular;
 
     return float4(finalColor, 1.0);
-	
+    
 	// Debug shading #2: map and return texture coordinates as a color (blue = 0)
 //	return float4(input.TexCoord, 0, 1);
 }
