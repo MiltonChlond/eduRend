@@ -30,6 +30,11 @@ OBJModel::OBJModel(
 		indexOffset = (unsigned int)indices.size();
 	}
 
+	for (int i = 0; i < indices.size(); i += 3)
+	{
+		Calculate_TB(mesh->Vertices[indices[i]], mesh->Vertices[indices[i + 1]], mesh->Vertices[indices[i + 2]]);
+	}
+
 	// Vertex array descriptor
 	D3D11_BUFFER_DESC vertexbufferDesc = { 0 };
 	vertexbufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -79,6 +84,15 @@ OBJModel::OBJModel(
 				<< (SUCCEEDED(hr) ? " - OK" : "- FAILED") << std::endl;
 		}
 
+		if (material.NormalTextureFilename.size()) {
+
+			hr = LoadTextureFromFile(
+				dxdevice,
+				material.NormalTextureFilename.c_str(),
+				&material.NormalTexture);
+			std::cout << "\t" << material.NormalTextureFilename
+				<< (SUCCEEDED(hr) ? " - OK" : "- FAILED") << std::endl;
+		}
 		// + other texture types here - see Material class
 		// ...
 	}
@@ -111,6 +125,7 @@ void OBJModel::Render()
 
 		// Bind diffuse texture to slot t0 of the PS
 		m_dxdevice_context->PSSetShaderResources(0, 1, &material.DiffuseTexture.TextureView);
+		m_dxdevice_context->PSSetShaderResources(1, 1, &material.NormalTexture.TextureView);
 		// + bind other textures here, e.g. a normal map, to appropriate slots
 
 		// Make the drawcall
@@ -123,6 +138,7 @@ OBJModel::~OBJModel()
 	for (auto& material : m_materials)
 	{
 		SAFE_RELEASE(material.DiffuseTexture.TextureView);
+		SAFE_RELEASE(material.NormalTexture.TextureView);
 		// Release other used textures ...
 	}
 }

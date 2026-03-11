@@ -19,6 +19,8 @@ struct PSIn
 {
 	float4 Pos  : SV_Position;
 	float3 Normal : NORMAL;
+	float3 Tangent : TANGENT;
+	float3 Binormal : BINORMAL;
 	float2 TexCoord : TEX;
     float3 WorldPos : WORLDPOS;
 };
@@ -51,6 +53,8 @@ PSIn VS_main(VSIn input)
     output.WorldPos = worldPos.xyz;
 
     output.Normal = normalize(mul(ModelToWorldMatrix, float4(input.Normal, 0.0f)).xyz);
+    output.Tangent = normalize(mul(ModelToWorldMatrix, float4(input.Tangent, 0.0f)).xyz);
+    output.Binormal = normalize(mul(ModelToWorldMatrix, float4(input.Binormal, 0.0f)).xyz);
 
     float4 viewPos = mul(WorldToViewMatrix, worldPos);
     output.Pos = mul(ProjectionMatrix, viewPos);

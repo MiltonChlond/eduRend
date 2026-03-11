@@ -92,6 +92,27 @@ public:
 		m_dxdevice_context->Unmap(m_material_buffer, 0);
 	}
 
+	void Calculate_TB(Vertex& v0, Vertex& v1, Vertex& v2)
+	{
+		vec3f D = v1.Position - v0.Position;
+		vec3f E = v2.Position - v0.Position;
+		vec2f F = v1.TexCoord - v0.TexCoord;
+		vec2f G = v2.TexCoord - v0.TexCoord;
+
+		float r = 1 / (F.x * G.y - F.y * G.x);
+
+		vec3f T = (D * G.y - E * F.y) * r;
+		vec3f B = (E * F.x - D * G.x) * r;
+
+		v0.Tangent += T;
+		v1.Tangent += T;
+		v2.Tangent += T;
+
+		v0.Binormal += B;
+		v1.Binormal += B;
+		v2.Binormal += B;
+	}
+
 	void SetParent(Model& par)
 	{
 		parent = &par;

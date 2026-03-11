@@ -5,6 +5,7 @@ class CubeModel : public Model
 {
 	unsigned m_number_of_indices = 0;
 	Texture texture;
+	Texture normTexture;
 
 public:
 	

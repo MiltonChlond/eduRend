@@ -50,6 +50,7 @@ struct Material
 
 	// Device textures
 	Texture DiffuseTexture; //!< Diffuse Texture
+	Texture NormalTexture; //!< Diffuse Texture
 	// + other texture types
 };
 

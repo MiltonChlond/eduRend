@@ -11,7 +11,8 @@ CubeModel::CubeModel(
 	std::vector<unsigned> indices;
 
 	//texture
-	LoadTextureFromFile(dxdevice, dxdevice_context, "assets/textures/crate.png", &texture);
+	LoadTextureFromFile(dxdevice, dxdevice_context, "assets/textures/Fieldstone_diffuse.png", &texture);
+	LoadTextureFromFile(dxdevice, dxdevice_context, "assets/textures/Fieldstone_bump.png", &normTexture);
 	if (!texture.TextureView)
 	{
 		OutputDebugStringA("nah");
@@ -22,6 +23,11 @@ CubeModel::CubeModel(
 	}
 
 	CreateCube(size, vertices, indices);
+
+	for (int i = 0; i < indices.size(); i += 3)
+	{
+		Calculate_TB(vertices[indices[i]], vertices[indices[i + 1]], vertices[indices[i + 2]]);
+	}
 
 	// Vertex array descriptor
 	D3D11_BUFFER_DESC vertexbufferDesc{ 0 };
@@ -146,6 +152,7 @@ void CubeModel::Render()
 	//m_dxdevice_context->PSSetConstantBuffers(1, 1, &m_material_buffer);
 
 	m_dxdevice_context->PSSetShaderResources(0, 1, &texture.TextureView);
+	m_dxdevice_context->PSSetShaderResources(1, 1, &normTexture.TextureView);
 
 	// Make the drawcall
 	m_dxdevice_context->DrawIndexed(m_number_of_indices, 0, 0);
@@ -154,4 +161,5 @@ void CubeModel::Render()
 CubeModel::~CubeModel()
 {
 	SAFE_RELEASE(texture.TextureView);
+	SAFE_RELEASE(normTexture.TextureView);
 }
