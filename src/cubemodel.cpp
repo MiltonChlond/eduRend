@@ -29,6 +29,12 @@ CubeModel::CubeModel(
 		Calculate_TB(vertices[indices[i]], vertices[indices[i + 1]], vertices[indices[i + 2]]);
 	}
 
+	for (auto v : vertices)
+	{
+		v.Tangent = (v.Tangent - v.Normal * dot(v.Tangent, v.Normal)).normalize();
+		v.Binormal = v.Normal % v.Tangent.normalize();
+	}
+
 	// Vertex array descriptor
 	D3D11_BUFFER_DESC vertexbufferDesc{ 0 };
 	vertexbufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -58,6 +64,10 @@ CubeModel::CubeModel(
 	SETNAME(m_index_buffer, "IndexBuffer");
 
 	m_number_of_indices = (unsigned int)indices.size();
+
+	m_material.AmbientColour = { 0.5f,0.5f,0.5f };
+	m_material.DiffuseColour = { 0,0,0 };
+	m_material.SpecularColour = { 0,0,0 };
 }
 
 void CubeModel::CreateCube(float sideLength, std::vector<Vertex>& vertices, std::vector<unsigned>& indices) const
@@ -149,7 +159,9 @@ void CubeModel::Render()
 	// Bind our index buffer
 	m_dxdevice_context->IASetIndexBuffer(m_index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
-	//m_dxdevice_context->PSSetConstantBuffers(1, 1, &m_material_buffer);
+	UpdateMatBuffer(0);
+
+	m_dxdevice_context->PSSetConstantBuffers(1, 1, &m_material_buffer);
 
 	m_dxdevice_context->PSSetShaderResources(0, 1, &texture.TextureView);
 	m_dxdevice_context->PSSetShaderResources(1, 1, &normTexture.TextureView);

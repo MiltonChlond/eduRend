@@ -27,6 +27,8 @@ struct MaterialBuffer
 	vec4f ambientColor;
 	vec4f diffuseColor;
 	vec4f specularColor;
+	int IsSkybox;
+	float3 padding;
 };
 
 class Model
@@ -67,7 +69,7 @@ public:
 		ASSERT(hr = m_dxdevice->CreateBuffer(&matBuffer, nullptr, &m_material_buffer));
 	}
 
-	void UpdateMatBuffer()
+	void UpdateMatBuffer(int isSkybox)
 	{
 		D3D11_MAPPED_SUBRESOURCE resource;
 		m_dxdevice_context->Map(m_material_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
@@ -87,7 +89,9 @@ public:
 		buffer->specularColor.x = m_material.SpecularColour.x;
 		buffer->specularColor.y = m_material.SpecularColour.y;
 		buffer->specularColor.z = m_material.SpecularColour.z;
-		buffer->specularColor.w = 0.3;
+		buffer->specularColor.w = 0.3f;
+
+		buffer->IsSkybox = isSkybox;
 
 		m_dxdevice_context->Unmap(m_material_buffer, 0);
 	}
@@ -104,13 +108,8 @@ public:
 		vec3f T = (D * G.y - E * F.y) * r;
 		vec3f B = (E * F.x - D * G.x) * r;
 
-		v0.Tangent += T;
-		v1.Tangent += T;
-		v2.Tangent += T;
-
-		v0.Binormal += B;
-		v1.Binormal += B;
-		v2.Binormal += B;
+		v0.Tangent = v1.Tangent = v2.Tangent = normalize(T);
+		v0.Binormal = v1.Binormal = v2.Binormal = normalize(B);
 	}
 
 	void SetParent(Model& par)

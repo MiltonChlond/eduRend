@@ -20,19 +20,17 @@ OBJModel::OBJModel(
 	{
 		// Append the drawcall indices
 		for (auto& tri : dc.Triangles)
+		{
 			indices.insert(indices.end(), tri.VertexIndices, tri.VertexIndices + 3);
-
+			Calculate_TB(mesh->Vertices[tri.VertexIndices[0]], mesh->Vertices[tri.VertexIndices[1]], mesh->Vertices[tri.VertexIndices[2]]);
+		}
+			
 		// Create a range
 		unsigned int indexSize = (unsigned int)dc.Triangles.size() * 3;
 		int materialIndex = dc.MaterialIndex > -1 ? dc.MaterialIndex : -1;
 		m_index_ranges.push_back({ indexOffset, indexSize, 0, materialIndex });
 
 		indexOffset = (unsigned int)indices.size();
-	}
-
-	for (int i = 0; i < indices.size(); i += 3)
-	{
-		Calculate_TB(mesh->Vertices[indices[i]], mesh->Vertices[indices[i + 1]], mesh->Vertices[indices[i + 2]]);
 	}
 
 	// Vertex array descriptor
@@ -119,7 +117,7 @@ void OBJModel::Render()
 
 		m_material = material;
 
-		UpdateMatBuffer();
+		UpdateMatBuffer(0);
 
 		m_dxdevice_context->PSSetConstantBuffers(1, 1, &m_material_buffer);
 

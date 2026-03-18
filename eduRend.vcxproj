@@ -183,6 +183,7 @@
     <ClInclude Include="src\parseutil.h" />
     <ClInclude Include="src\scene.h" />
     <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\Skybox.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\vec\mat.h" />
@@ -207,6 +208,7 @@
     <ClCompile Include="src\quadmodel.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\shader.c" />
+    <ClCompile Include="src\Skybox.cpp" />
     <ClCompile Include="src\texture.cpp" />
     <ClCompile Include="src\vec\mat.cpp" />
     <ClCompile Include="src\vec\vec.cpp" />

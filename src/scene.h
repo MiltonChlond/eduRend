@@ -100,6 +100,8 @@ class OurTestScene : public Scene
 	Model* m_cube_moon;
 	Model* m_sponza;
 
+	Model* skyBox;
+
 	mat4f m_sponza_transform;
 	mat4f m_cube_transform_sun;
 	mat4f m_cube_transform_earth;
@@ -117,6 +119,8 @@ class OurTestScene : public Scene
 
 	void InitTransformationBuffer();
 	void InitLightCameraBuffer();
+
+	Texture cubeTex;
 
 	ID3D11SamplerState* sampler = nullptr;
 	ID3D11SamplerState* samplerPoint = nullptr;

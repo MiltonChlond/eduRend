@@ -3,6 +3,7 @@
 #include "QuadModel.h"
 #include "cubemodel.h"
 #include "OBJModel.h"
+#include "Skybox.h"
 
 Scene::Scene(
 	ID3D11Device* dxdevice,
@@ -56,6 +57,37 @@ void OurTestScene::Init()
 	m_cube_earth = new CubeModel(m_dxdevice, m_dxdevice_context, 0.5f);
 	m_cube_moon = new CubeModel(m_dxdevice, m_dxdevice_context, 0.2f);
 	m_sponza = new OBJModel("assets/crytek-sponza/sponza.obj", m_dxdevice, m_dxdevice_context);
+
+	skyBox = new Skybox(m_dxdevice, m_dxdevice_context, 450);
+
+	/*const char* cubeFilenames[6] =
+	{
+		"assets/cubemaps/debug_cubemap/debug_posx.png",
+		"assets/cubemaps/debug_cubemap/debug_negx.png",
+		"assets/cubemaps/debug_cubemap/debug_posy.png",
+		"assets/cubemaps/debug_cubemap/debug_negy.png",
+		"assets/cubemaps/debug_cubemap/debug_posz.png",
+		"assets/cubemaps/debug_cubemap/debug_negz.png",
+	};*/
+	const char* cubeFilenames[6] =
+	{
+		"assets/cubemaps/brightday/posx.png",
+		"assets/cubemaps/brightday/negx.png",
+		"assets/cubemaps/brightday/posy.png",
+		"assets/cubemaps/brightday/negy.png",
+		"assets/cubemaps/brightday/posz.png",
+		"assets/cubemaps/brightday/negz.png",
+	};
+
+	HRESULT hr = LoadCubeTextureFromFile(
+		m_dxdevice,
+		cubeFilenames,
+		&cubeTex);
+
+	if (SUCCEEDED(hr)) std::cout << "Cubemap OK" << std::endl;
+	else std::cout << "Cubemap failed to load" << std::endl;
+
+	m_dxdevice_context->PSSetShaderResources(2, 1, &cubeTex.TextureView);
 }
 
 //
@@ -115,6 +147,9 @@ void OurTestScene::Update(
 		UpdateSamplerState(0);
 	}
 
+	skyBox->SetTransform(mat4f::translation(m_camera->Position()) *
+						mat4f::rotation(0, 0.0f, 0.0f, 0.0f) *
+						mat4f::scaling(1, 1, 1));
 
 	m_cube_sun->SetTransform(mat4f::translation(0, 0, 0) *
 							mat4f::rotation(-m_angle, 0.0f, 1.0f, 0.0f) *
@@ -170,6 +205,9 @@ void OurTestScene::Render()
 	/*UpdateTransformationBuffer(m_quad_transform, m_view_matrix, m_projection_matrix);
 	m_quad->Render();*/
 
+	UpdateTransformationBuffer(skyBox->GetTransform(), m_view_matrix, m_projection_matrix);
+	skyBox->Render();
+
 	//cube
 	UpdateTransformationBuffer(m_cube_sun->GetTransform(), m_view_matrix, m_projection_matrix);
 	m_cube_sun->Render();
@@ -194,11 +232,15 @@ void OurTestScene::Release()
 	SAFE_DELETE(m_sponza);
 	SAFE_DELETE(m_camera);
 
+	SAFE_DELETE(skyBox);
+
 	SAFE_RELEASE(m_transformation_buffer);
 	SAFE_RELEASE(m_lightcamera_buffer);
 	SAFE_RELEASE(samplerAni);
 	SAFE_RELEASE(samplerPoint);
 	SAFE_RELEASE(samplerLinear);
+
+	SAFE_RELEASE(cubeTex.TextureView);
 	// + release other CBuffers
 }
 
